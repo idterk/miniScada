@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>SCADA Monitor</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Login Panel Styles */
+        .login-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 400px;
+            overflow: hidden;
+        }
+
+        .login-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .login-header h2 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .login-header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .login-body {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        /* Main App Styles (hidden initially) */
+        .app-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 800px;
+            overflow: hidden;
+        }
+
+        .app-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .app-header h1 {
+            font-size: 20px;
+        }
+
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .status-bar {
+            background: #f0f0f0;
+            padding: 10px 25px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .status-online {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .sensor-selector {
+            padding: 20px 25px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .sensor-btn {
+            background: #f3f4f6;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .sensor-btn:hover {
+            background: #e0e7ff;
+        }
+
+        .sensor-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .card {
+            margin: 20px 25px;
+            padding: 20px;
+            background: #f9fafb;
+            border-radius: 12px;
+        }
+
+        .sensor-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .unit {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .bar-container {
+            background: #e5e7eb;
+            border-radius: 10px;
+            height: 30px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .bar {
+            background: #10b981;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            transition: width 0.3s ease;
+        }
+
+        .control-panel {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .control-panel input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .control-panel button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .add-sensor-btn {
+            margin: 0 25px 20px 25px;
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            width: calc(100% - 50px);
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div id="loginPanel" class="login-container">
+    <div class="login-header">
+        <h2>🏭 SCADA Monitor</h2>
+        <p>Войдите в систему мониторинга</p>
+    </div>
+    <div class="login-body">
+        <div id="loginError" class="error-message hidden"></div>
+        <div class="form-group">
+            <label>Имя пользователя</label>
+            <input type="text" id="username" placeholder="Введите логин" value="admin">
+        </div>
+        <div class="form-group">
+            <label>Пароль</label>
+            <input type="password" id="password" placeholder="Введите пароль" value="password123">
+        </div>
+        <button class="login-btn" onclick="login()">🔐 Войти в систему</button>
+    </div>
+</div>
+
+<div id="appPanel" class="app-container hidden">
+    <div class="app-header">
+        <h1>🌡️ SCADA Monitor — Система мониторинга</h1>
+        <button class="logout-btn" onclick="logout()">🚪 Выйти</button>
+    </div>
+    <div class="status-bar">
+        <span>📡 WebSocket: <span id="wsStatus" class="status-online">Подключение...</span></span>
+        <span>👤 Пользователь: <span id="currentUser">-</span></span>
+    </div>
+
+    <div class="sensor-selector" id="sensorSelector"></div>
+
+    <button class="add-sensor-btn" onclick="addNewSensor()">➕ Добавить новый датчик</button>
+
+    <div class="card" id="sensorCard">
+        <div class="sensor-title">Датчик: <span id="currentSensorId">-</span></div>
+        <div>🌡️ Температура: <span id="temp" class="value">--</span><span class="unit"> °C</span></div>
+        <div style="margin-top: 15px;">
+            <div>💧 Заполненность: <span id="fill">--</span><span class="unit"> %</span></div>
+            <div class="bar-container">
+                <div class="bar" id="fillBar" style="width: 0%">0%</div>
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <h4>🖊️ Управление датчиком</h4>
+            <input type="number" id="tempInput" placeholder="Новая температура (-100..100)" step="0.1" min="-100" max="100">
+            <button onclick="updateTemp()">Изменить температуру</button>
+            <br>
+            <input type="range" id="fillInput" min="0" max="100" value="0" oninput="updateFillPreview(this.value)">
+            <span id="fillPreview">0%</span>
+            <button onclick="updateFill()">Изменить заполненность</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let stompClient = null;
+    let currentSensorId = null;
+    let sensors = [];
+    let token = localStorage.getItem('token');
+    let username = localStorage.getItem('username');
+
+    // Проверяем, есть ли сохранённый токен
+    if (token && username) {
+        document.getElementById('loginPanel').classList.add('hidden');
+        document.getElementById('appPanel').classList.remove('hidden');
+        document.getElementById('currentUser').innerText = username;
+        connectWebSocket();
+        loadAllSensors();
+    }
+
+    async function login() {
+        const usernameInput = document.getElementById('username').value;
+        const passwordInput = document.getElementById('password').value;
+        const errorDiv = document.getElementById('loginError');
+
+        errorDiv.classList.add('hidden');
+
+        try {
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: usernameInput, password: passwordInput })
+            });
+
+            if (!response.ok) {
+                throw new Error('Неверный логин или пароль');
+            }
+
+            const data = await response.json();
+
+            if (data.token) {
+                token = data.token;
+                username = data.username;
+                localStorage.setItem('token', token);
+                localStorage.setItem('username', username);
+
+                // Переключаем интерфейс
+                document.getElementById('loginPanel').classList.add('hidden');
+                document.getElementById('appPanel').classList.remove('hidden');
+                document.getElementById('currentUser').innerText = username;
+
+                // Подключаем WebSocket и загружаем датчики
+                connectWebSocket();
+                loadAllSensors();
+            } else {
+                throw new Error('Ошибка авторизации');
+            }
+        } catch (err) {
+            errorDiv.innerText = err.message;
+            errorDiv.classList.remove('hidden');
+        }
+    }
+
+    function logout() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('username');
+        if (stompClient) {
+            stompClient.disconnect();
+        }
+        token = null;
+        username = null;
+        document.getElementById('appPanel').classList.add('hidden');
+        document.getElementById('loginPanel').classList.remove('hidden');
+        document.getElementById('username').value = 'admin';
+        document.getElementById('password').value = 'password123';
+    }
+
+    function connectWebSocket() {
+        const socket = new SockJS('/scada-websocket');
+        stompClient = Stomp.over(socket);
+        stompClient.debug = null;
+
+        stompClient.connect({}, function() {
+            document.getElementById('wsStatus').innerHTML = '🟢 Подключён';
+            document.getElementById('wsStatus').classList.add('status-online');
+
+            stompClient.subscribe('/topic/sensor-updates', function(msg) {
+                const data = JSON.parse(msg.body);
+                updateUI(data);
+            });
+        }, function() {
+            document.getElementById('wsStatus').innerHTML = '🔴 Ошибка подключения';
+            setTimeout(connectWebSocket, 3000);
+        });
+    }
+
+    async function loadAllSensors() {
+        try {
+            const response = await fetch('/api/sensors', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (response.ok) {
+                sensors = await response.json();
+                renderSensorButtons();
+                if (sensors.length > 0 && !currentSensorId) {
+                    switchToSensor(sensors[0]);
+                }
+            }
+        } catch (error) {
+            console.log('Ошибка загрузки списка датчиков');
+        }
+    }
+
+    function renderSensorButtons() {
+        const container = document.getElementById('sensorSelector');
+        container.innerHTML = '';
+        sensors.forEach(sensorId => {
+            const btn = document.createElement('button');
+            btn.className = 'sensor-btn' + (sensorId === currentSensorId ? ' active' : '');
+            btn.textContent = sensorId;
+            btn.onclick = () => switchToSensor(sensorId);
+            container.appendChild(btn);
+        });
+    }
+
+    async function switchToSensor(sensorId) {
+        currentSensorId = sensorId;
+        document.getElementById('currentSensorId').textContent = sensorId;
+        renderSensorButtons();
+
+        try {
+            const response = await fetch(`/api/state/${sensorId}`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (data) updateUI(data);
+            }
+        } catch (error) {
+            console.log('Нет данных для датчика');
+        }
+    }
+
+    async function addNewSensor() {
+        try {
+            const response = await fetch('/api/sensors/add', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (response.ok) {
+                const newSensor = await response.json();
+                sensors.push(newSensor.sensorId);
+                renderSensorButtons();
+                console.log('✅ Добавлен датчик:', newSensor.sensorId);
+            }
+        } catch (error) {
+            alert('Ошибка при добавлении датчика');
+        }
+    }
+
+    function updateUI(data) {
+        if (data.sensorId === currentSensorId) {
+            if (data.temperature !== undefined && data.temperature !== null) {
+                document.getElementById('temp').innerText = data.temperature.toFixed(1);
+            }
+            if (data.fillLevel !== undefined && data.fillLevel !== null) {
+                document.getElementById('fill').innerText = data.fillLevel;
+                const bar = document.getElementById('fillBar');
+                bar.style.width = data.fillLevel + '%';
+                bar.innerText = data.fillLevel + '%';
+            }
+        }
+    }
+
+    function updateTemp() {
+        const val = parseFloat(document.getElementById('tempInput').value);
+        if (isNaN(val)) return;
+        if (val < -100 || val > 100) {
+            alert('Температура должна быть от -100 до 100°C');
+            return;
+        }
+
+        fetch('/api/sensor/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ sensorId: currentSensorId, temperature: val })
+        });
+
+        document.getElementById('tempInput').value = '';
+    }
+
+    function updateFill() {
+        const val = parseInt(document.getElementById('fillInput').value);
+
+        fetch('/api/sensor/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ sensorId: currentSensorId, fillLevel: val })
+        });
+
+        document.getElementById('fillInput').value = 0;
+        document.getElementById('fillPreview').innerText = '0%';
+    }
+
+    function updateFillPreview(value) {
+        document.getElementById('fillPreview').innerText = value + '%';
+    }
+</script>
+</body>
+</html>

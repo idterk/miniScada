@@ -1,0 +1,132 @@
+server:
+  port: 8081
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+spring:
+  application:
+    name: scada-monitor
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/scada
+    username: scada_user
+    password: scada_pass_2024
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+    show-sql: false
+    open-in-view: false
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    enabled: true
+    drop-first: false
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: redis_pass_2024
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+  session:
+    store-type: redis
+    timeout: 3600
+    redis:
+      namespace: scada:sessions
+      flush-mode: on_save
+      save-mode: on_set_attribute
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: scada-monitor-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.trusted.packages: "monitor.dto,monitor.entity"
+        spring.json.value.default.type: monitor.dto.SensorDataDTO
+      max-poll-records: 100
+      fetch-min-size: 1024
+      fetch-max-wait: 500
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      retries: 3
+      acks: all
+      compression-type: snappy
+    listener:
+      missing-topics-fatal: false
+      ack-mode: batch
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+      fail-on-empty-beans: false
+    deserialization:
+      fail-on-unknown-properties: false
+    time-zone: UTC
+
+jwt:
+  secret: ${JWT_SECRET:scada-secret-key-must-be-256-bits-long-for-hs256-algorithm-2024}
+  expiration: 86400000
+  refresh-expiration: 604800000
+
+emulator:
+  enabled: true
+  mode: full
+  background-interval: 3
+  add-noise: true
+  noise-range: 1.5
+  processing-time-ms: 300
+
+logging:
+  level:
+    monitor: DEBUG
+    monitor.emulator: INFO
+    org.springframework.security: INFO
+    org.springframework.kafka: INFO
+    org.springframework.session: DEBUG
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/scada-monitor.log
+    max-size: 10MB
+    max-history: 30
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always

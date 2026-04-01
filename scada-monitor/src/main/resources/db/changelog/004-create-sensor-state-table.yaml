@@ -1,0 +1,67 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-create-sensor-state-table
+      author: scada-team
+      changes:
+        - createTable:
+            tableName: sensor_state
+            remarks: "Sensor current state and history"
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: sensor_id
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: value
+                  type: DOUBLE
+                  remarks: "Current sensor value"
+              - column:
+                  name: fill_level
+                  type: INTEGER
+                  remarks: "Fill level for level sensors"
+              - column:
+                  name: quality
+                  type: INTEGER
+                  defaultValue: 100
+                  remarks: "Data quality 0-100%"
+              - column:
+                  name: alarm_level
+                  type: VARCHAR(20)
+                  defaultValue: "NORMAL"
+              - column:
+                  name: status_message
+                  type: VARCHAR(500)
+              - column:
+                  name: timestamp
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: is_current
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  remarks: "Is this the current state"
+              - column:
+                  name: version
+                  type: BIGINT
+                  defaultValue: 0
+        - createIndex:
+            indexName: idx_state_sensor_id
+            tableName: sensor_state
+            columns:
+              - column:
+                  name: sensor_id
+        - createIndex:
+            indexName: idx_state_timestamp
+            tableName: sensor_state
+            columns:
+              - column:
+                  name: timestamp

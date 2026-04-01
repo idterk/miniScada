@@ -1,0 +1,54 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-create-error-log-table
+      author: scada-team
+      changes:
+        - createTable:
+            tableName: error_log
+            remarks: "System error log"
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: error_type
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: sensor_id
+                  type: VARCHAR(100)
+              - column:
+                  name: controller_id
+                  type: VARCHAR(100)
+              - column:
+                  name: user_id
+                  type: VARCHAR(36)
+              - column:
+                  name: message
+                  type: TEXT
+              - column:
+                  name: stack_trace
+                  type: TEXT
+              - column:
+                  name: details
+                  type: TEXT
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+        - createIndex:
+            indexName: idx_error_type
+            tableName: error_log
+            columns:
+              - column:
+                  name: error_type
+        - createIndex:
+            indexName: idx_error_sensor
+            tableName: error_log
+            columns:
+              - column:
+                  name: sensor_id

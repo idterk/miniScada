@@ -1,0 +1,126 @@
+databaseChangeLog:
+  - changeSet:
+      id: 007-insert-default-users
+      author: scada-team
+      changes:
+        - insert:
+            tableName: users
+            columns:
+              - column: { name: id, value: "a1b2c3d4-1111-1111-1111-111111111111" }
+              - column: { name: username, value: "admin" }
+              - column: { name: password, value: "$2a$12$cdySjeWzXQBTILfa0/gEa.sJy5FeS57yJFJsinFQzaorQ8T2pBEZ2" }
+              - column: { name: email, value: "admin@scada.com" }
+              - column: { name: full_name, value: "System Administrator" }
+              - column: { name: role, value: "ADMIN" }
+              - column: { name: is_enabled, value: true }
+        - insert:
+            tableName: users
+            columns:
+              - column: { name: id, value: "b2c3d4e5-2222-2222-2222-222222222222" }
+              - column: { name: username, value: "engineer" }
+              - column: { name: password, value: "$2a$12$cdySjeWzXQBTILfa0/gEa.sJy5FeS57yJFJsinFQzaorQ8T2pBEZ2" }
+              - column: { name: email, value: "engineer@scada.com" }
+              - column: { name: full_name, value: "Control Engineer" }
+              - column: { name: role, value: "ENGINEER" }
+              - column: { name: is_enabled, value: true }
+        - insert:
+            tableName: users
+            columns:
+              - column: { name: id, value: "c3d4e5f6-3333-3333-3333-333333333333" }
+              - column: { name: username, value: "operator" }
+              - column: { name: password, value: "$2a$12$cdySjeWzXQBTILfa0/gEa.sJy5FeS57yJFJsinFQzaorQ8T2pBEZ2" }
+              - column: { name: email, value: "operator@scada.com" }
+              - column: { name: full_name, value: "Shift Operator" }
+              - column: { name: role, value: "OPERATOR" }
+              - column: { name: is_enabled, value: true }
+
+  - changeSet:
+      id: 007-insert-demo-controllers
+      author: scada-team
+      changes:
+        - insert:
+            tableName: controller_metadata
+            columns:
+              - column: { name: id, value: "plc-main-01" }
+              - column: { name: name, value: "Main PLC Controller" }
+              - column: { name: description, value: "Main production line controller" }
+              - column: { name: location, value: "Workshop A" }
+              - column: { name: ip_address, value: "192.168.1.100" }
+              - column: { name: port, value: 502 }
+              - column: { name: status, value: "ACTIVE" }
+
+  - changeSet:
+      id: 007-insert-demo-sensors
+      author: scada-team
+      changes:
+        - insert:
+            tableName: sensor_metadata
+            columns:
+              - column: { name: id, value: "temp-furnace-01" }
+              - column: { name: controller_id, value: "plc-main-01" }
+              - column: { name: name, value: "Furnace Temperature" }
+              - column: { name: type, value: "TEMPERATURE" }
+              - column: { name: unit, value: "°C" }
+              - column: { name: min_value, value: 0 }
+              - column: { name: max_value, value: 1200 }
+              - column: { name: default_value, value: 20 }
+              - column: { name: warning_low, value: 800 }
+              - column: { name: warning_high, value: 1100 }
+              - column: { name: alarm_low, value: 700 }
+              - column: { name: alarm_high, value: 1150 }
+        - insert:
+            tableName: sensor_metadata
+            columns:
+              - column: { name: id, value: "level-tank-01" }
+              - column: { name: controller_id, value: "plc-main-01" }
+              - column: { name: name, value: "Tank Level" }
+              - column: { name: type, value: "LEVEL" }
+              - column: { name: unit, value: "%" }
+              - column: { name: min_value, value: 0 }
+              - column: { name: max_value, value: 100 }
+              - column: { name: default_value, value: 50 }
+              - column: { name: warning_low, value: 10 }
+              - column: { name: warning_high, value: 90 }
+              - column: { name: alarm_low, value: 5 }
+              - column: { name: alarm_high, value: 95 }
+        - insert:
+            tableName: sensor_metadata
+            columns:
+              - column: { name: id, value: "pressure-line-01" }
+              - column: { name: controller_id, value: "plc-main-01" }
+              - column: { name: name, value: "Line Pressure" }
+              - column: { name: type, value: "PRESSURE" }
+              - column: { name: unit, value: "bar" }
+              - column: { name: min_value, value: 0 }
+              - column: { name: max_value, value: 10 }
+              - column: { name: default_value, value: 4.5 }
+              - column: { name: warning_low, value: 2 }
+              - column: { name: warning_high, value: 8 }
+              - column: { name: alarm_low, value: 1 }
+              - column: { name: alarm_high, value: 9 }
+
+  - changeSet:
+      id: 007-insert-initial-states
+      author: scada-team
+      changes:
+        - insert:
+            tableName: sensor_state
+            columns:
+              - column: { name: sensor_id, value: "temp-furnace-01" }
+              - column: { name: value, value: 850.5 }
+              - column: { name: timestamp, valueComputed: "CURRENT_TIMESTAMP" }
+              - column: { name: is_current, value: true }
+        - insert:
+            tableName: sensor_state
+            columns:
+              - column: { name: sensor_id, value: "level-tank-01" }
+              - column: { name: fill_level, value: 65 }
+              - column: { name: timestamp, valueComputed: "CURRENT_TIMESTAMP" }
+              - column: { name: is_current, value: true }
+        - insert:
+            tableName: sensor_state
+            columns:
+              - column: { name: sensor_id, value: "pressure-line-01" }
+              - column: { name: value, value: 4.8 }
+              - column: { name: timestamp, valueComputed: "CURRENT_TIMESTAMP" }
+              - column: { name: is_current, value: true }

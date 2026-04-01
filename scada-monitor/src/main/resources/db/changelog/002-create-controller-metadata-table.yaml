@@ -1,0 +1,55 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-create-controller-metadata-table
+      author: scada-team
+      changes:
+        - createTable:
+            tableName: controller_metadata
+            remarks: "PLC/Controller metadata from developer A"
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR(100)
+                  remarks: "Controller ID"
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(200)
+                  remarks: "Controller name"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: VARCHAR(500)
+                  remarks: "Description"
+              - column:
+                  name: location
+                  type: VARCHAR(255)
+                  remarks: "Physical location"
+              - column:
+                  name: ip_address
+                  type: VARCHAR(45)
+                  remarks: "IP address"
+              - column:
+                  name: port
+                  type: INTEGER
+                  remarks: "Port number"
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  defaultValue: "ACTIVE"
+                  remarks: "Controller status"
+              - column:
+                  name: last_heartbeat
+                  type: TIMESTAMP
+                  remarks: "Last heartbeat timestamp"
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
